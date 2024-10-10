@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 
-const { getListController, postListController, deleteListController, editListController } = require('./middlewares/listControllers')
+const { getListController, postListController, deleteListController, editListController } = require('./middlewares/todolistControllers')
 const { signupController, loginController,logoutController } = require('./middlewares/userControllers')
 const { authenticateToken } = require('./middlewares/token/token')
 

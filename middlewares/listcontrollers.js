@@ -1,24 +1,22 @@
 
-const { ObjectId } = require('mongodb')
-const { connectToDb } = require('../DBsetup/config')
 const todos = 'todos'
 
 async function getListController(req, res) {
-    const mongoConnection = await connectToDb()
-    const todolist = await mongoConnection.collection(todos).find().toArray()
-    res.json(todolist)
+    res.json({ user: req.user })
 }
 
 async function postListController(req, res) {
     try {
-        const mongoConnection = await connectToDb()
         const newItem = req.body
-        if (!newItem || !newItem.name) {
+        const user = req.user
+        if (!newItem || !newItem.item) {
             return res.status(400).json('Invalid item')
         }
-        const result = await mongoConnection.collection(todos).insertOne(newItem)
+        const result = await req.db.collection(todos).updateOne({ _id: user._id }, { $push: { 'todolist': newItem.item } })
         console.log(result)
-        res.json({ succes: 'New item added to list', id: result.insertedId })
+        if (result.modifiedCount) {
+            res.json({ succes: 'New item added to list' })
+        } else { res.json({ message: 'Something error occured' }) }
     } catch (error) {
         res.status(500).json(error.toString())
         console.log(error)
@@ -27,15 +25,14 @@ async function postListController(req, res) {
 
 const editListController = async (req, res) => {
     try {
-        const mongoConnection = await connectToDb()
-        const { name, id } = req.body
-        console.log(req.body)
-        const result = await mongoConnection.collection(todos).updateOne({ "_id": new ObjectId(id) }, { $set: { "name": name } })
-        console.log(result)
+        const { item, itemIndex } = req.body
+        const todolist = req.user.todolist
+        todolist[itemIndex] = item
+        const result = await req.db.collection(todos).updateOne({ _id: req.user._id }, { $set: { 'todolist': todolist } })
         if (result.modifiedCount == 1) {
             res.json({ succes: 'Updated one item succesfully' })
         } else {
-            res.json({ error: 'invalid request' })
+            res.json({ message: 'invalid request' })
         }
     } catch (error) {
         res.status(500).json(error.toString())
@@ -45,13 +42,13 @@ const editListController = async (req, res) => {
 
 const deleteListController = async (req, res) => {
     try {
-        const mongoConnection = await connectToDb()
-        const itemId = req.params.id
-        console.log(itemId)
-        const result = await mongoConnection.collection(todos).deleteOne({ _id: new ObjectId(itemId) })
-        if (result.deletedCount == 1) {
+        const index = req.params.key
+        const todolist = req.user.todolist
+        todolist.splice(index, 1)
+        const result = await req.db.collection(todos).updateOne({ _id: req.user._id }, { $set: { 'todolist': todolist } })
+        if (result.modifiedCount == 1) {
             res.json({ succes: 'One item deleted succesfully' })
-        } else { res.json({ error: 'Item not found' }) }
+        } else { res.json({ message: 'Item not found' }) }
     } catch (error) {
         res.status(500).json(error.toString())
         console.log(error)

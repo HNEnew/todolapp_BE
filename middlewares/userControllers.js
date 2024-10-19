@@ -34,14 +34,14 @@ const loginController = async (req, res) => {
     try {
         const { email, password } = req.body.userdata
         const result = await req.db.collection(todos).findOne({ email: email })
-        if (result && result.password) {
+        if (password && result && result.password) {
             const isMatch = await bcrypt.compare(password, result.password)
             if (isMatch) {
                 const token = signToken(email)
                 res.cookie('token', token, {
                     httpOnly: true,
-                    sameSite: 'None',
-                    secure: true
+                    sameSite: 'lax',
+                    secure: false
                 })
                 res.json({ message: 'Logged in succesfully', user: result })
             }

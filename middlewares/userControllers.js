@@ -46,7 +46,7 @@ const loginController = async (req, res) => {
                 res.json({ message: 'Logged in succesfully', user: result })
             }
         } else {
-            res.json({ message: 'Invalid username or password' })
+            res.json({ message: 'Invalid email or password' })
         }
     } catch (error) {
         console.log(error)
